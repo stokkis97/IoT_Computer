@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{{ device_id }} - Sensor Data</title>
+    <style>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .year {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: #aaa;
+        }
+        .timestamp {
+            margin-top: 1rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="btn btn-secondary" onclick="goBack()">Go Back</button>
+            <div>
+                <h1>{{ device_id }} - Sensor Data</h1>
+                <div class="timestamp" id="timestamp"></div>
+            </div>
+            <div></div>
+        </div>
+        <table class="table table-striped table-hover" id="deviceDataTable">
+            <thead>
+                <tr>
+                    <th>Hardware Name</th>
+                    <th>Sensor</th>
+                    <th>Type</th>
+                    <th>Value</th>
+                    <th>Unit</th>
+                </tr>
+            </thead>
+            <tbody id="deviceDataBody">
+            </tbody>
+        </table>
+        <div class="year">
+            &copy; {{ current_year }}
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
+    <script>
+        const deviceId = '{{ device_id }}';
+        const socket = io();
+
+        function goBack() {
+            window.history.back();
+        }
+
+        function fetchDeviceData() {
+            socket.emit('request_device_data', deviceId);
+        }
+
+        socket.on('device_data', (data) => {
+            let tableBody = "";
+
+            data.devices.forEach(device => {
+                device.sensors.forEach(sensor => {
+                    tableBody += `
+                        <tr>
+                            <td>${device.Hardware_name}</td>
+                            <td>${sensor.sensor}</td>
+                            <td>${sensor.type}</td>
+                            <td>${sensor.value}</td>
+                            <td>${sensor.unit}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            document.getElementById("deviceDataBody").innerHTML = tableBody;
+
+            // Update timestamp
+            const currentTime = new Date();
+            document.getElementById("timestamp").textContent = `Last updated: ${currentTime.toLocaleString()}`;
+        });
+
+        fetchDeviceData();
+    </script>
+</body>
+</html>
